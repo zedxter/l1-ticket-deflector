@@ -1,19 +1,19 @@
 """
-L1 Ticket Deflector — граф на LangGraph.
+L1 Ticket Deflector — LangGraph agent.
 
-Поток:
-   classify ──> (нет совпадения) ──────────────> queue
+Flow:
+   classify ──> (no match) ─────────────────────> queue
       │
       ├──(low sensitivity)──> auto_resolve ──> notify_user
       │
       └──(high/critical)───> human_review ──> escalate ──> notify_user
 
-Ключевая идея: агент НЕ галлюцинирует на чувствительных запросах —
-всё, что касается доступов, привилегий, ИБ или бюджета, уходит человеку
-(human-in-the-loop) с подготовленным контекстом.
+Key idea: the agent does NOT hallucinate on sensitive requests —
+anything touching access, privileges, security or budget goes to a human
+(human-in-the-loop) with prepared context.
 
-Запуск (демо без ключа):   MOCK_MODE=1 python graph/run_demo.py
-Боевой запуск:             OPENAI_API_KEY=... python graph/run_demo.py
+Run (demo, no key):   MOCK_MODE=1 python graph/run_demo.py
+Production run:       OPENAI_API_KEY=... python graph/run_demo.py
 """
 from __future__ import annotations
 
@@ -27,7 +27,7 @@ from config import (AUTO_RESOLVE_SENSITIVITY, CONFIDENCE_THRESHOLD,
                     ESCALATION, MOCK_MODE, MODEL)
 
 # --------------------------------------------------------------------------
-# Состояние графа
+# Graph state
 # --------------------------------------------------------------------------
 class TicketState(TypedDict, total=False):
     ticket_id: str
@@ -38,39 +38,39 @@ class TicketState(TypedDict, total=False):
     sensitivity: str | None
     confidence: float
     decision: str | None          # auto_resolve | human_review | queue
-    target: str | None            # кому эскалируем
-    actions: Annotated[list, operator.add]  # журнал шагов
+    target: str | None            # who we escalate to
+    actions: Annotated[list, operator.add]  # step log
     user_reply: str | None
     est_minutes_saved: int
 
 
 # --------------------------------------------------------------------------
-# Инструменты (в боевой версии — реальные tool-calls в ITSM / AD / MDM)
+# Tools (in production: real tool-calls into ITSM / AD / MDM)
 # --------------------------------------------------------------------------
 def itsm_create_ticket(kind: str, summary: str, **fields) -> str:
-    """Создаёт заявку в ITSM (Jira SM / Freshservice / Zammad...)."""
-    return f"[ITSM] создана заявка '{kind}': {summary} {fields or ''}"
+    """Creates a request in the ITSM (Jira SM / Freshservice / Zammad...)."""
+    return f"[ITSM] created '{kind}' request: {summary} {fields or ''}"
 
 
 def directory_reset_password(user: str) -> str:
-    """Сброс пароля в каталоге (AD/Entra ID self-service)."""
-    return f"[AD] self-service reset link отправлен пользователю {user}"
+    """Password reset in the directory (AD/Entra ID self-service)."""
+    return f"[AD] self-service reset link sent to user {user}"
 
 
 def mdm_push_install(app: str) -> str:
-    return f"[MDM] push-установка '{app}' через Company Portal"
+    return f"[MDM] push-install of '{app}' via Company Portal"
 
 
 def notify(user: str, message: str, channel: str = "slack") -> str:
-    return f"[{channel.upper()}] → {user}: {message}"
+    return f"[{channel.upper()}] -> {user}: {message}"
 
 
 def escalate_to(team: str, context: str) -> str:
-    return f"[ESCALATE → {team}] {context}"
+    return f"[ESCALATE -> {team}] {context}"
 
 
 # --------------------------------------------------------------------------
-# LLM-классификатор (в MOCK_MODE — детерминированная заглушка)
+# LLM classifier (in MOCK_MODE: deterministic stub)
 # --------------------------------------------------------------------------
 def _load_kb():
     import os
@@ -82,12 +82,12 @@ def _load_kb():
 
 def llm_classify(text: str) -> dict:
     """
-    Возвращает: {article_id, title, resolution, sensitivity, confidence}
+    Returns: {article_id, title, resolution, sensitivity, confidence}
 
-    В боевой версии здесь вызов LLM с RAG по базе знаний:
-        - structured output (Pydantic) для article_id + confidence
-        - top-k retrieval статей KB, LLM выбирает и оценивает уверенность
-    В MOCK_MODE используем keyword-fallback из demo/deflector.py.
+    In production this is an LLM call with RAG over the knowledge base:
+        - structured output (Pydantic) for article_id + confidence
+        - top-k retrieval of KB articles, LLM selects and scores confidence
+    In MOCK_MODE we use the keyword fallback from demo/deflector.py.
     """
     if MOCK_MODE:
         import sys, os
@@ -99,27 +99,27 @@ def llm_classify(text: str) -> dict:
         if art is None:
             return {"article_id": None, "title": None, "resolution": None,
                     "sensitivity": None, "confidence": 0.0}
-        # грубая нормализация score → confidence (в проде — logit LLM)
+        # rough score -> confidence normalization (in prod: LLM logit)
         conf = min(0.95, 0.5 + score / 10)
         return {"article_id": art["id"], "title": art["title"],
                 "resolution": art["resolution"], "sensitivity": art["sensitivity"],
                 "confidence": round(conf, 2), "est_minutes_saved": art["est_minutes_saved"]}
 
-    # ---- Боевой путь ----
+    # ---- Production path ----
     from langchain_openai import ChatOpenAI
     from pydantic import BaseModel, Field
 
     class Routing(BaseModel):
-        article_id: str = Field(description="ID статьи KB или 'none'")
+        article_id: str = Field(description="KB article ID or 'none'")
         confidence: float = Field(ge=0, le=1)
         reasoning: str = ""
 
     kb = _load_kb()
     catalog = "\n".join(f"{a['id']} | {a['category']} | {a['title']}" for a in kb["articles"])
     prompt = (
-        "Ты — L1 IT-агент. Подбери наиболее подходящую статью базы знаний для тикета.\n"
-        f"Тикеты: {catalog}\n\nТикет: {text!r}\n"
-        "Верни article_id (или 'none'), confidence и краткое reasoning."
+        "You are an L1 IT agent. Pick the most relevant knowledge base article for the ticket.\n"
+        f"Articles: {catalog}\n\nTicket: {text!r}\n"
+        "Return article_id (or 'none'), confidence and a short reasoning."
     )
     llm = ChatOpenAI(model=MODEL, temperature=0).with_structured_output(Routing)
     out = llm.invoke(prompt)
@@ -133,7 +133,7 @@ def llm_classify(text: str) -> dict:
 
 
 # --------------------------------------------------------------------------
-# Узлы графа
+# Graph nodes
 # --------------------------------------------------------------------------
 def node_classify(state: TicketState) -> TicketState:
     res = llm_classify(state["text"])
@@ -145,7 +145,7 @@ def node_classify(state: TicketState) -> TicketState:
         "confidence": res.get("confidence", 0.0),
         "est_minutes_saved": res.get("est_minutes_saved", 0),
         "actions": [
-            f"classify: {res.get('article_id') or 'нет совпадения'} "
+            f"classify: {res.get('article_id') or 'no match'} "
             f"(conf={res.get('confidence', 0.0):.2f})"
         ],
     }
@@ -161,14 +161,14 @@ def route_after_classify(state: TicketState) -> Literal["auto_resolve", "human_r
 
 def node_auto_resolve(state: TicketState) -> TicketState:
     actions = [
-        f"auto_resolve: применяю статью {state['article_id']}",
+        f"auto_resolve: applying article {state['article_id']}",
         itsm_create_ticket("auto", state["article_title"], article=state["article_id"]),
     ]
-    # примеры реальных действий по категории (в проде — через MCP-инструменты)
+    # example real actions per category (in prod: via MCP tools)
     title = (state.get("article_title") or "").lower()
-    if "парол" in title:
+    if "password" in title:
         actions.append(directory_reset_password(state["ticket_id"]))
-    if "установка" in title or "по из каталог" in title:
+    if "install" in title or "software" in title:
         actions.append(mdm_push_install("requested-app"))
     return {"decision": "auto_resolve", "actions": actions}
 
@@ -176,30 +176,30 @@ def node_auto_resolve(state: TicketState) -> TicketState:
 def node_human_review(state: TicketState) -> TicketState:
     target = ESCALATION.get(state.get("sensitivity", "high"), "service_desk_l2")
     actions = [
-        f"human_review: чувствительность={state.get('sensitivity')} → не решаю сам",
-        escalate_to(target, f"тикет {state['ticket_id']} требует человека "
-                            f"(статья {state['article_id']})"),
+        f"human_review: sensitivity={state.get('sensitivity')} -> not resolving myself",
+        escalate_to(target, f"ticket {state['ticket_id']} needs a human "
+                            f"(article {state['article_id']})"),
     ]
     return {"decision": "human_review", "target": target, "actions": actions,
-            "user_reply": "Передано специалисту, срок реакции — 30 минут."}
+            "user_reply": "Handed to a specialist, response time 30 minutes."}
 
 
 def node_queue(state: TicketState) -> TicketState:
     return {"decision": "queue",
-            "actions": ["queue: нет уверенного совпадения → общая очередь L1"],
-            "user_reply": "Ваш запрос передан в службу поддержки."}
+            "actions": ["queue: no confident match -> general L1 queue"],
+            "user_reply": "Your request has been passed to the service desk."}
 
 
 def node_notify_user(state: TicketState) -> TicketState:
     if state["decision"] == "auto_resolve":
-        msg = f"Решено автоматически: {state.get('article_resolution')}"
+        msg = f"Resolved automatically: {state.get('article_resolution')}"
         return {"user_reply": msg,
                 "actions": [notify(state["ticket_id"], msg, "teams")]}
     return {"actions": [notify(state["ticket_id"], state.get("user_reply", ""), "teams")]}
 
 
 # --------------------------------------------------------------------------
-# Сборка графа
+# Graph assembly
 # --------------------------------------------------------------------------
 def build_graph():
     g = StateGraph(TicketState)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Запуск боевого графа на демо-тикетах.
-MOCK_MODE=1 — без API-ключа (проверка логики).
+Runs the production graph over the demo tickets.
+MOCK_MODE=1 — no API key (logic check).
 """
 import json
 import os
@@ -16,7 +16,7 @@ TICKETS = os.path.join(os.path.dirname(HERE), "demo", "tickets.json")
 
 def main():
     data = json.load(open(TICKETS, encoding="utf-8"))
-    tickets = data["tickets"][:12]  # короткий прогон для наглядности
+    tickets = data["tickets"][:12]  # short run for readability
     auto = human = queue = 0
     for t in tickets:
         out = handle(t["id"], t["text"])
@@ -29,8 +29,8 @@ def main():
         print(f"    target   : {out.get('target')}")
         print(f"    reply    : {out.get('user_reply')}")
         for a in out.get("actions", []):
-            print(f"      · {a}")
-    print(f"\nИтого: auto={auto}, human={human}, queue={queue} из {len(tickets)}")
+            print(f"      - {a}")
+    print(f"\nTotal: auto={auto}, human={human}, queue={queue} of {len(tickets)}")
 
 
 if __name__ == "__main__":

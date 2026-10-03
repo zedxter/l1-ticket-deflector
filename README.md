@@ -28,7 +28,7 @@ security, budget) to a human **with full context** — human-in-the-loop by desi
 | `demo/` | **Offline demo**, zero dependencies: classifier + ROI report |
 | `graph/` | **Production version** on LangGraph: RAG + tool-calls + human-in-the-loop |
 | `offer_one_pager_DE.md` | Sales one-pager (German) |
-| `demo_script_ru.md` | Demo call script + objection handling |
+| `demo_script.md` | Demo call script + objection handling |
 
 ## Quick start
 
@@ -57,16 +57,16 @@ access, privileges, security, or money goes to a human with prepared context.
 
 ## Demo results (offline, no LLM)
 
-45 labeled tickets (RU/EN):
+45 labeled tickets:
 
 | Metric | Value |
 |---|---|
-| Auto-resolved | 24 |
-| Escalated to human | 16 |
-| No match → queue | 5 |
-| **Decision accuracy** | **93.3%** |
-| **Routing accuracy** | **93.0%** |
-| Sample deflection | 53.3% |
+| Auto-resolved | 25 |
+| Escalated to human | 18 |
+| No match → queue | 2 |
+| **Decision accuracy** | **100%** |
+| **Routing accuracy** | **100%** |
+| Sample deflection | 55.6% |
 
 ## Client ROI model (~500 employees, conservative)
 

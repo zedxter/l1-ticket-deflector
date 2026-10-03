@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-L1 Ticket Deflector — офлайн-демо (без внешних зависимостей).
+L1 Ticket Deflector — offline demo (no external dependencies).
 
-Демонстрирует ключевую механику:
-  1) классификация тикета по базе знаний (стемминг + фразы),
-  2) решение "решить автоматически" / "эскалировать на человека (human review)",
-  3) deflection rate и честная ROI-модель.
+Demonstrates the core mechanics:
+  1) ticket classification against a knowledge base (stemming + phrases),
+  2) the "auto-resolve" vs "escalate to a human (human review)" decision,
+  3) deflection rate and an honest ROI model.
 
-Запускается на любой машине с Python 3. Боевая версия: LangGraph + LLM (см. ../graph/).
+Runs on any machine with Python 3. Production version: LangGraph + LLM (see ../graph/).
 """
 import json
 import os
@@ -23,31 +23,21 @@ REPORT_PATH = os.path.join(BASE, "report.md")
 HUMAN_REVIEW_SENSITIVITY = {"high", "critical"}
 MATCH_THRESHOLD = 1.0
 
-# ---- Честная модель ROI (консервативные допущения рынка DACH) ----
+# ---- Honest ROI model (conservative DACH market assumptions) ----
 MODEL = {
     "company_employees": 500,
-    "monthly_l1_tickets": 1200,   # бенчмарк для ~500 сотрудников
-    "deflection_rate": 0.30,      # консервативно 30% (рынок: 20–40%)
-    "avg_handle_min": 19,         # среднее время ручной обработки L1
-    "hourly_rate_eur": 45,        # fully-loaded стоимость IT-специалиста
+    "monthly_l1_tickets": 1200,   # benchmark for ~500 employees
+    "deflection_rate": 0.30,      # conservative 30% (market: 20-40%)
+    "avg_handle_min": 19,         # average manual L1 handling time
+    "hourly_rate_eur": 45,        # fully-loaded cost of an IT specialist
     "retainer_eur": 4000,
 }
 
-RU_SUFFIXES = [
-    "ирования", "рования", "ования", "ается", "яется", "иться", "аться",
-    "ется", "ться", "циями", "овать", "ировать", "ация", "ации", "цией",
-    "ость", "ости", "ное", "ные", "ным", "ами", "ями", "ах", "ях",
-    "ов", "ев", "ий", "ый", "ой", "ая", "ое", "ые", "ам", "ям",
-    "у", "ю", "а", "я", "ы", "и", "е", "о", "ь",
-]
 EN_SUFFIXES = ["ing", "tion", "ment", "ed", "es", "s"]
 
 
 def stem(w):
     w = w.lower()
-    for suf in RU_SUFFIXES:
-        if len(w) - len(suf) >= 4 and w.endswith(suf):
-            return w[: -len(suf)]
     for suf in EN_SUFFIXES:
         if len(w) - len(suf) >= 4 and w.endswith(suf):
             return w[: -len(suf)]
@@ -55,13 +45,13 @@ def stem(w):
 
 
 def tokens(text):
-    text = text.lower().replace("ё", "е")
+    text = text.lower()
     text = re.sub(r"[^\w\s]", " ", text, flags=re.UNICODE)
     return [stem(t) for t in text.split() if t]
 
 
 def kw_strength(kw_tokens):
-    """Базовая сила одного ключа по его длине/специфичности."""
+    """Base strength of a single keyword by its length/specificity."""
     length = sum(len(t) for t in kw_tokens)
     s = 1.0
     if length >= 6:
@@ -85,7 +75,7 @@ def match_article(text_tokens, article):
         matched += 1
         strength = kw_strength(kt)
         if len(kt) > 1:
-            strength += 0.5 * len(kt)  # бонус за фразу
+            strength += 0.5 * len(kt)  # phrase bonus
         best = max(best, strength)
     if matched == 0:
         return 0.0
@@ -137,7 +127,7 @@ def accuracy(results):
         if exp == "escalate":
             dec_ok += 1 if r["decision"] == "escalate_unmatched" else 0
         else:
-            # верное решение: тикет найден (auto или human), а не ушёл в очередь
+            # correct decision: ticket matched (auto or human), not sent to the queue
             dec_ok += 1 if r["article"] is not None else 0
             art_ok += 1 if r["article"] == exp else 0
     return art_ok, dec_ok, n
@@ -149,7 +139,7 @@ def decision_correct(r):
         return None
     if exp == "escalate":
         return r["decision"] == "escalate_unmatched"
-    # верное решение = не ушло в общую очередь, а найдено (auto или human)
+    # correct decision = not sent to the general queue, but matched (auto or human)
     return r["article"] is not None
 
 
@@ -169,59 +159,59 @@ def build_report(results):
     art_n = sum(1 for r in results if r.get("expect") not in (None, "escalate"))
     routing_acc = art_ok / art_n * 100 if art_n else 0
 
-    # --- Честная ROI-модель ---
+    # --- Honest ROI model ---
     m = MODEL
     auto_m = m["monthly_l1_tickets"] * m["deflection_rate"]
     min_saved = auto_m * m["avg_handle_min"]
     hours_saved = min_saved / 60
     savings_eur = hours_saved * m["hourly_rate_eur"]
     roi = savings_eur / m["retainer_eur"]
-    fte = hours_saved / 160  # ~160 рабочих часов в месяц
+    fte = hours_saved / 160  # ~160 working hours per month
 
     L = []
     a = L.append
     a("=" * 70)
-    a("  L1 TICKET DEFLECTOR — ОТЧЁТ ДЕМО-ПРОГОНА")
+    a("  L1 TICKET DEFLECTOR - DEMO RUN REPORT")
     a("=" * 70)
     a("")
-    a("  РЕЗУЛЬТАТЫ НА ДЕМО-ВЫБОРКЕ")
+    a("  RESULTS ON THE DEMO DATASET")
     a("  " + "-" * 66)
-    a(f"  Всего тикетов обработано  : {total}")
-    a(f"    ✅ Авто-решено           : {auto}")
-    a(f"    🧑 Эскалировано человеку : {esc_human}  (high/critical sensitivity)")
-    a(f"    ❓ Без совпадения        : {esc_unmatched}  (в общую очередь)")
+    a(f"  Tickets processed         : {total}")
+    a(f"    [AUTO] Resolved          : {auto}")
+    a(f"    [HUMAN] Escalated        : {esc_human}  (high/critical sensitivity)")
+    a(f"    [QUEUE] No match         : {esc_unmatched}  (general L1 queue)")
     a("")
-    a(f"  Deflection rate (выборка) : {sample_deflection:.1f}%")
-    a(f"  Точность решения          : {dec_acc:.1f}%  (auto/escalate/queue — верно)")
-    a(f"  Точность маршрутизации    : {routing_acc:.1f}%  (попадание в нужную статью KB)")
-    a("")
-    a("  " + "-" * 66)
-    a("  ЧЕСТНАЯ ROI-МОДЕЛЬ (консервативные допущения DACH)")
-    a("  " + "-" * 66)
-    a(f"  Компания                  : ~{m['company_employees']} сотрудников")
-    a(f"  L1-тикетов в месяц        : ~{m['monthly_l1_tickets']}")
-    a(f"  Deflection (консервативно) : {m['deflection_rate']*100:.0f}%  (рынок: 20–40%)")
-    a(f"  Ср. время ручной обработки : {m['avg_handle_min']} мин")
-    a(f"  Ставка IT-специалиста     : {m['hourly_rate_eur']} €/час (fully loaded)")
-    a("")
-    a(f"  Авто-резолюций в месяц    : ~{auto_m:.0f}")
-    a(f"  Сэкономлено времени       : ~{hours_saved:.0f} ч/мес  (~{fte:.1f} FTE)")
-    a(f"  💰 Экономия клиента       : ~{savings_eur:,.0f} €/мес")
-    a(f"  Стоимость ретейнера       : {m['retainer_eur']:,} €/мес")
-    a(f"  📈 ROI                     : ×{roi:.1f} в месяц (×{roi*12:.0f} в год)")
+    a(f"  Deflection rate (sample)  : {sample_deflection:.1f}%")
+    a(f"  Decision accuracy         : {dec_acc:.1f}%  (auto/escalate/queue correct)")
+    a(f"  Routing accuracy          : {routing_acc:.1f}%  (correct KB article)")
     a("")
     a("  " + "-" * 66)
-    a("  РАЗБОР ПО ТИКЕТАМ")
+    a("  HONEST ROI MODEL (conservative DACH assumptions)")
+    a("  " + "-" * 66)
+    a(f"  Company                   : ~{m['company_employees']} employees")
+    a(f"  L1 tickets per month      : ~{m['monthly_l1_tickets']}")
+    a(f"  Deflection (conservative) : {m['deflection_rate']*100:.0f}%  (market: 20-40%)")
+    a(f"  Avg manual handling time  : {m['avg_handle_min']} min")
+    a(f"  IT specialist rate        : {m['hourly_rate_eur']} EUR/hour (fully loaded)")
+    a("")
+    a(f"  Auto-resolutions / month  : ~{auto_m:.0f}")
+    a(f"  Time saved                : ~{hours_saved:.0f} h/month  (~{fte:.1f} FTE)")
+    a(f"  Client savings            : ~{savings_eur:,.0f} EUR/month")
+    a(f"  Retainer                  : {m['retainer_eur']:,} EUR/month")
+    a(f"  ROI                       : x{roi:.1f} per month (x{roi*12:.0f} per year)")
+    a("")
+    a("  " + "-" * 66)
+    a("  PER-TICKET BREAKDOWN")
     a("  " + "-" * 66)
     for r in results:
-        tag = {"auto_resolve": "AUTO ✅", "escalate_human": "HUMAN🧑",
-               "escalate_unmatched": "QUEUE❓"}[r["decision"]]
-        ok = "" if decision_correct(r) in (True, None) else "  ← внимание"
-        a(f"  [{tag}] {r['id']} → {r['article'] or '—':<6} | {r['text'][:52]}{ok}")
+        tag = {"auto_resolve": "AUTO ", "escalate_human": "HUMAN",
+               "escalate_unmatched": "QUEUE"}[r["decision"]]
+        ok = "" if decision_correct(r) in (True, None) else "  <- attention"
+        a(f"  [{tag}] {r['id']} -> {r['article'] or '-':<6} | {r['text'][:52]}{ok}")
     a("")
     a("=" * 70)
-    a("  Демо: ключевые слова + стемминг (без LLM). Боевая версия — LangGraph:")
-    a("  RAG по базе знаний, tool-calls в ITSM, human-in-the-loop, телеметрия.")
+    a("  Demo: keywords + stemming (no LLM). Production version - LangGraph:")
+    a("  RAG over the KB, tool-calls into ITSM, human-in-the-loop, telemetry.")
     a("=" * 70)
 
     return "\n".join(L), {
@@ -239,10 +229,10 @@ def main():
     report, stats = build_report(results)
     print(report)
     with open(REPORT_PATH, "w", encoding="utf-8") as f:
-        f.write("# L1 Ticket Deflector — отчёт демо-прогона\n\n```\n")
+        f.write("# L1 Ticket Deflector - demo run report\n\n```\n")
         f.write(report)
         f.write("\n```\n")
-    print(f"\nОтчёт сохранён: {REPORT_PATH}")
+    print(f"\nReport saved: {REPORT_PATH}")
     return 0
 
 
