@@ -1,0 +1,7 @@
+# L1 Ticket Deflector — боевая версия (LangGraph + LLM)
+# Требуется Python 3.10+. НЕ ставится на Raspberry Pi (armv6, 426MB RAM).
+langgraph>=0.2.28
+langchain-core>=0.3.15
+langchain-openai>=0.2.5      # или langchain-anthropic для Claude
+pydantic>=2.9
+python-dotenv>=1.0
