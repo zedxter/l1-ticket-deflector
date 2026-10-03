@@ -90,3 +90,7 @@ access, privileges, security, or money goes to a human with prepared context.
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+## Contact
+
+MadeBy.Expert — Potsdam, Germany · [info@madeby.expert](mailto:info@madeby.expert)

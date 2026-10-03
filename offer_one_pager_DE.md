@@ -46,4 +46,4 @@ Kein Ersatz für Ihr ITSM — er legt sich **auf** Ihr bestehendes System
 Kostenloses 20-Minuten-Gespräch: Wir schauen uns Ihr Ticketvolumen an und
 zeigen, was sich realistisch automatisieren lässt.
 
-Kontakt: Danil — MadeBy.Expert
+Kontakt: Danil — MadeBy.Expert · info@madeby.expert
