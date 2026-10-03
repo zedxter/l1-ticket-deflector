@@ -1,0 +1,184 @@
+{
+  "articles": [
+    {
+      "id": "KB-001",
+      "title": "Сброс пароля доменной учётной записи (self-service)",
+      "category": "password_reset",
+      "sensitivity": "low",
+      "keywords": ["пароль", "password", "забыл пароль", "reset password", "сбросить пароль", "сброс пароль", "passwort"],
+      "resolution": "Перейдите на https://sso.company.com/reset, подтвердите личность через MFA и задайте новый пароль. Действует сразу на Windows, VPN и почте.",
+      "est_minutes_saved": 18
+    },
+    {
+      "id": "KB-002",
+      "title": "Сброс пароля привилегированной/админ-учётной записи",
+      "category": "password_reset",
+      "sensitivity": "high",
+      "keywords": ["привилегированн", "root доступ", "domain admin", "service account", "админ учётн", "учётн запис админ"],
+      "resolution": "ТРЕБУЕТ ПОДТВЕРЖДЕНИЯ ИБ. Агент подготовил заявку и передал дежурному администратору.",
+      "est_minutes_saved": 18
+    },
+    {
+      "id": "KB-003",
+      "title": "Настройка VPN с ноутбука (AnyConnect)",
+      "category": "vpn_access",
+      "sensitivity": "low",
+      "keywords": ["vpn", "anyconnect", "cisco secure client", "подключит vpn", "vpn не подключается", "удалённ доступ"],
+      "resolution": "Откройте Cisco Secure Client → выберите профиль 'Company-VPN' → войдите доменом SSO + MFA. Если профиля нет — установите из Company Portal.",
+      "est_minutes_saved": 20
+    },
+    {
+      "id": "KB-004",
+      "title": "VPN периодически отключается",
+      "category": "vpn_troubleshoot",
+      "sensitivity": "low",
+      "keywords": ["vpn отключа", "vpn падает", "vpn разрыв", "vpn переподключ", "disconnect vpn", "vpn нестабильн"],
+      "resolution": "1) Отключите энергосбережение Wi-Fi адаптера. 2) Обновите клиент. 3) Переключите протокол на IKEv2. 4) Если не помогло — соберите логи (Help → Diagnostics) и откройте тикет L2.",
+      "est_minutes_saved": 25
+    },
+    {
+      "id": "KB-005",
+      "title": "Установка ПО из каталога (self-service)",
+      "category": "software_install",
+      "sensitivity": "low",
+      "keywords": ["company portal", "программ из каталог", "софт из каталог", "7-zip", "vscode", "vs code"],
+      "resolution": "Откройте Company Portal → Apps → найдите приложение → Install. Установка идёт под вашими правами, админ-пароль не нужен.",
+      "est_minutes_saved": 15
+    },
+    {
+      "id": "KB-006",
+      "title": "Установка ПО вне каталога (требует одобрения)",
+      "category": "software_install",
+      "sensitivity": "high",
+      "keywords": ["нестандартн", "не из каталог", "сторонн по", "3d-моделирован", "специализированн по", "особ по", "платн лиценз"],
+      "resolution": "ТРЕБУЕТ ОДОБРЕНИЯ. Агент создал заявку с обоснованием и передал руководителю ИТ/ИБ на согласование.",
+      "est_minutes_saved": 15
+    },
+    {
+      "id": "KB-007",
+      "title": "Принтер не печатает / оффлайн",
+      "category": "printer",
+      "sensitivity": "low",
+      "keywords": ["принтер", "печат", "printer", "очеред печати", "тонер", "print spooler", "драйвер принтер"],
+      "resolution": "1) Проверьте статус в Printers & Scanners → 'Открыть очередь'. 2) Снимите застрявшие задания. 3) Перезапустите Print Spooler. 4) Переустановите драйвер из Company Portal.",
+      "est_minutes_saved": 22
+    },
+    {
+      "id": "KB-008",
+      "title": "Доступ к сетевой папке / SharePoint",
+      "category": "access_request",
+      "sensitivity": "high",
+      "keywords": ["доступ к папк", "sharepoint", "права доступ", "сетев папк", "отозвать доступ", "доступ к ресурс"],
+      "resolution": "ТРЕБУЕТ ОДОБРЕНИЯ ВЛАДЕЛЬЦА РЕСУРСА. Агент определил владельца, подготовил запрос и отправил на approve.",
+      "est_minutes_saved": 20
+    },
+    {
+      "id": "KB-009",
+      "title": "Учётная запись заблокирована (не привилегированная)",
+      "category": "account_locked",
+      "sensitivity": "low",
+      "keywords": ["заблокир", "locked", "блокировк учётн", "аккаунт заблокир", "слишком мног попытк"],
+      "resolution": "Учётная запись разблокируется автоматически через 15 минут, либо через self-service портал sso.company.com/unlock с подтверждением MFA.",
+      "est_minutes_saved": 16
+    },
+    {
+      "id": "KB-010",
+      "title": "MFA / OTP не приходит или потерян телефон",
+      "category": "mfa_reset",
+      "sensitivity": "high",
+      "keywords": ["код mfa", "mfa код", "код подтвержд", "authenticator", "потерял телефон", "двухфакторн", "otp"],
+      "resolution": "ТРЕБУЕТ ВЕРИФИКАЦИИ ЛИЧНОСТИ. Агент инициировал процедуру проверки через руководителя/HR и передал в ИБ.",
+      "est_minutes_saved": 20
+    },
+    {
+      "id": "KB-011",
+      "title": "Медленный Wi-Fi / интернет",
+      "category": "network",
+      "sensitivity": "low",
+      "keywords": ["wi-fi", "wifi", "интернет медленн", "медленн интернет", "скорость интернет", "speedtest", "лагает сеть", "медленн wi-fi"],
+      "resolution": "1) Проверьте загрузку канала на speedtest. 2) Переключитесь на 5 ГГц SSID. 3) Обновите драйвер Wi-Fi. 4) Если проблема у нескольких сотрудников — сообщите в тикет L2 (инфраструктура).",
+      "est_minutes_saved": 18
+    },
+    {
+      "id": "KB-012",
+      "title": "Новый ноутбук / замена оборудования",
+      "category": "hardware_request",
+      "sensitivity": "high",
+      "keywords": ["новый ноутбук", "замена оборудован", "закупк", "клавиатура", "headset", "второй монитор закупк"],
+      "resolution": "ТРЕБУЕТ ОДОБРЕНИЯ БЮДЖЕТА. Агент создал заявку на закупку по стандарту и передал в отдел закупок/руководителю.",
+      "est_minutes_saved": 25
+    },
+    {
+      "id": "KB-013",
+      "title": "Настройка телефона / мобильной почты",
+      "category": "mobile",
+      "sensitivity": "low",
+      "keywords": ["почт на телефон", "outlook mobile", "iphone", "android", "мобильн почт", "настроить почт телефон"],
+      "resolution": "Установите Outlook Mobile из App Store / Google Play, войдите доменной учётной записью + MFA, разрешите управление профилем (Intune Company Portal).",
+      "est_minutes_saved": 17
+    },
+    {
+      "id": "KB-014",
+      "title": "Запрос лицензии на ПО (требует бюджета)",
+      "category": "license_request",
+      "sensitivity": "high",
+      "keywords": ["лиценз", "подписк", "license", "купить лиценз", "мест в команд"],
+      "resolution": "ТРЕБУЕТ ОДОБРЕНИЯ БЮДЖЕТА. Агент проверил свободные лицензии и, если их нет, создал заявку на закупку.",
+      "est_minutes_saved": 20
+    },
+    {
+      "id": "KB-015",
+      "title": "IT-онбординг нового сотрудника",
+      "category": "onboarding",
+      "sensitivity": "high",
+      "keywords": ["онбординг", "нов сотрудник", "new hire", "первый день", "onboarding"],
+      "resolution": "ТРЕБУЕТ РУЧНОГО ОФОРМЛЕНИЯ. Агент запустил чек-лист онбординга и назначил ответственных по системам.",
+      "est_minutes_saved": 30
+    },
+    {
+      "id": "KB-016",
+      "title": "Teams / Outlook не запускается",
+      "category": "app_login",
+      "sensitivity": "low",
+      "keywords": ["teams", "не запускается", "не открывается", "зависает", "очистить кэш", "переустанов приложен"],
+      "resolution": "1) Выйти и войти снова. 2) Очистить кэш (%appdata%/Microsoft/Teams). 3) Обновить приложение. 4) Переустановить из Company Portal.",
+      "est_minutes_saved": 19
+    },
+    {
+      "id": "KB-017",
+      "title": "Мало места на диске",
+      "category": "storage",
+      "sensitivity": "low",
+      "keywords": ["диск", "disk full", "нет места", "мало места", "переполнен", "квота"],
+      "resolution": "Запустите Дисковую очистку, очистите Downloads/Temp, удалите старые профили Teams. Если нужно больше 20 ГБ — создайте заявку на расширение квоты.",
+      "est_minutes_saved": 15
+    },
+    {
+      "id": "KB-018",
+      "title": "Восстановление данных из бэкапа",
+      "category": "backup_restore",
+      "sensitivity": "high",
+      "keywords": ["бэкап", "восстанов", "restore", "потерял файл", "удалил файл", "резервн копирован", "снапшот"],
+      "resolution": "ТРЕБУЕТ ОДОБРЕНИЯ. Агент проверил наличие снапшотов, подготовил запрос и передал в команду резервного копирования.",
+      "est_minutes_saved": 30
+    },
+    {
+      "id": "KB-019",
+      "title": "Подозрение на фишинг / инцидент ИБ",
+      "category": "security_incident",
+      "sensitivity": "critical",
+      "keywords": ["фишинг", "phishing", "взлом", "ransomware", "вирус", "подозрительн письм", "странн вход", "утечк"],
+      "resolution": "КРИТИЧНО. Немедленная эскалация в ИБ/SoC. Агент изолировал случай, собрал метаданные и разослал инструкцию 'не кликать'.",
+      "est_minutes_saved": 10
+    },
+    {
+      "id": "KB-020",
+      "title": "Внешний монитор / докстанция не определяется",
+      "category": "endpoint",
+      "sensitivity": "low",
+      "keywords": ["монитор", "докстанци", "dock", "hdmi", "второй экран", "внешн экран", "не определя", "расширить рабочий стол"],
+      "resolution": "1) Переподключите докстанцию. 2) Обновите прошивку дока из Company Portal. 3) Win+P → Extend. 4) Проверьте кабель/порт.",
+      "est_minutes_saved": 17
+    }
+  ]
+}
